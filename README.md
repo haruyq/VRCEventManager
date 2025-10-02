@@ -12,7 +12,7 @@
   - [ ] X Tweet Management
   - [ ] WonderNote Auto Post
 
-# Installatiion
+# Installation
 ### 前提要件
 * Docker環境
 * エディタ環境
