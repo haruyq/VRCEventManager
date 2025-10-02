@@ -1,0 +1,22 @@
+services:
+  api:
+    build:
+      context: ./API
+    container_name: api
+    ports:
+      - "8080:8080"
+    env_file:
+      - apiconf.env
+    restart: always
+    depends_on:
+      - bot
+  
+  bot:
+    build:
+      context: ./Bot
+    container_name: bot
+    ports:
+      - "50000:50000"
+    env_file:
+      - botconf.env
+    restart: always
