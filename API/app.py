@@ -28,7 +28,7 @@ class VRCEvMngrAPI(FastAPI):
 			except OSError as e:
 				self.log.warning(f"initial connection to bot failed: {e}")
 
-		@self.post("/api/dsc/send_announcement")
+		@self.post("/api/dsc/create_announcement")
 		async def send_announcement(payload: AnnouncementPayload):
 			try:
 				message_payload = json.dumps({
