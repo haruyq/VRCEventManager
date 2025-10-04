@@ -1,7 +1,7 @@
 ﻿import logging
 import aiofiles.os
 from discord.ext import commands
-from .logger import Logger
+from utils.logger import Logger
 
 Log: logging.Logger = Logger(__name__)
 
