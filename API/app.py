@@ -72,19 +72,3 @@ class VRCEvMngrAPI(FastAPI):
 				raise HTTPException(status_code=500, detail="Failed to create event") from exc
 
 			return JSONResponse(content=response)
-
-		@self.post("/api/dsc/check_admin")
-		async def check_admin(payload: CheckAdminPayload):
-			try:
-				message_payload = json.dumps({
-					"action": "check_admin",
-					"guild_id": payload.guild_id,
-					"user_id": payload.user_id
-				})
-				response = await self.sender.send_async(message_payload)
-	
-			except OSError as e:
-				self.log.error(f"failed to check admin: {e}")
-				raise HTTPException(status_code=503, detail="Bot connection unavailable") from e
-
-			return JSONResponse(content=response)
