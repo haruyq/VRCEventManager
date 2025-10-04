@@ -34,6 +34,7 @@ class VRCEvMngrAPI(FastAPI):
 				message_payload = json.dumps({
 					"action": "send_announcement",
 					"channel_id": payload.channel_id,
+					"everyone": payload.everyone,
 					"message": payload.message
 				})
 				response = await self.sender.send_async(message_payload)

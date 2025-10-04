@@ -50,7 +50,7 @@ class RequestHandler:
 
         return start_time, end_time, result
 
-    async def handle(self, message):
+    async def handle(self, message): # Received JSON Handler
         try:
             data: dict = json.loads(message)
             Log.debug(f"Handling Data:\n {data}")
@@ -63,6 +63,7 @@ class RequestHandler:
                 
                 case "send_announcement":
                     channel_id = data.get("channel_id")
+                    everyone = data.get("everyone", False)
                     message = data.get("message")
 
                     if channel_id is None:
@@ -72,8 +73,14 @@ class RequestHandler:
                     if channel is None:
                         channel = await self.bot.fetch_channel(int(channel_id))
 
-                    await channel.send(message)
-                    return Responses.ok("Announcement sent")
+                    if everyone:
+                        allowed_mentions = discord.AllowedMentions(everyone=True)
+                        message = f"@everyone\n {message}"
+                    else:
+                        allowed_mentions = discord.AllowedMentions.none()
+
+                    msg = await channel.send(message, allowed_mentions=allowed_mentions)
+                    return Responses.ok(f"Announcement sent with ID {msg.id}")
                 
                 case "create_event":
                     guild_id = int(data.get("guild_id"))
@@ -136,7 +143,6 @@ class RequestHandler:
                             "image": image_bytes,
                             "reason": "Created via VRCEventManager",
                         }
-
                         if entity_type in (discord.EntityType.stage_instance, discord.EntityType.voice):
                             kwargs["channel"] = channel
                         else:

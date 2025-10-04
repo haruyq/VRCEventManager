@@ -4,6 +4,7 @@ from pydantic import BaseModel
 class AnnouncementPayload(BaseModel):
 	message: str
 	channel_id: int = None if os.environ.get("CHANNEL_ID") is None else int(os.environ.get("CHANNEL_ID"))
+	everyone: bool = False
 
 class CreateEventPayload(BaseModel):
 	guild_id: int
