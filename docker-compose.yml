@@ -20,3 +20,7 @@ services:
     env_file:
       - botconf.env
     restart: always
+
+volumes:
+  Database:
+  Secrets:

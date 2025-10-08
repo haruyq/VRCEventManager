@@ -1,17 +1,21 @@
 import os
 import json
+import aiohttp
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 
 from payloads import *
 
 from connector.sender import Sender
 from utils.logger import Logger
+from utils.database import UsersDB
+from utils.auth import AuthUtil
+
+Log = Logger(__name__)
 
 class VRCEvMngrAPI(FastAPI):
 	def __init__(self):
-		self.log = Logger(__name__)
 		self.sender = Sender(
 			ip=os.environ.get("BOT_SOCK_ADDRESS"),
 			port=int(os.environ.get("BOT_SOCK_PORT"))
@@ -22,11 +26,50 @@ class VRCEvMngrAPI(FastAPI):
 
 		@self.on_event("startup")
 		async def startup_event():
+			await UsersDB.init_db()
+			if not os.path.isfile("/Secrets/key.pem"):
+				AuthUtil.generate_key()
 			try:
 				await self.sender.connect_async()
-    
 			except OSError as e:
-				self.log.warning(f"initial connection to bot failed: {e}")
+				Log.warning(f"initial connection to bot failed: {e}")
+
+		@self.get("/api/login/callback")
+		async def callback(code: str):
+			if not code:
+				raise HTTPException(status_code=400, detail="Missing Arguments")
+
+			async with aiohttp.ClientSession() as session:
+				headers = { "Content-Type": "application/x-www-form-urlencoded" }
+				data = {
+					"client_id": os.environ.get("CLIENT_ID"),
+					"client_secret": os.environ.get("CLIENT_SECRET"),
+					"grant_type": "authorization_code",
+					"code": code,
+					"redirect_uri": os.environ.get("REDIRECT_URI")
+				}
+				async with session.post("https://discord.com/api/oauth2/token", headers=headers, data=data) as resp:
+					if resp.status != 200:
+						raise HTTPException(status_code=503, detail="Failed to fetch token from Discord")
+					token_data = await resp.json()
+
+				headers = { "Authorization": f"Bearer {token_data['access_token']}" }
+				async with aiohttp.ClientSession() as session:
+					async with session.get("https://discord.com/api/users/@me", headers=headers) as resp:
+						user_data = await resp.json()
+
+			if not await UsersDB.is_user_allowed(int(user_data["id"])):
+				raise HTTPException(status_code=403, detail="Access Denied")
+
+			jwt_payload = {
+				"user_id": user_data["id"],
+				"username": user_data["username"],
+				"avatar": user_data["avatar"]
+			}
+			jwt_token = AuthUtil.encode(jwt_payload)
+			response = RedirectResponse(url=os.environ.get("FRONTEND_URL") + "/dash")
+			response.set_cookie(key="Authorization", value=jwt_token, httponly=True, secure=True, samesite="lax")
+			return response
 
 		@self.post("/api/dsc/create_announcement")
 		async def send_announcement(payload: AnnouncementPayload):
@@ -40,7 +83,7 @@ class VRCEvMngrAPI(FastAPI):
 				response = await self.sender.send_async(message_payload)
     
 			except OSError as e:
-				self.log.error(f"failed to send announcement: {e}")
+				Log.error(f"failed to send announcement: {e}")
 				raise HTTPException(status_code=503, detail="Bot connection unavailable") from e
 
 			return JSONResponse(content=response)
@@ -65,10 +108,10 @@ class VRCEvMngrAPI(FastAPI):
 			except HTTPException:
 				raise
 			except OSError as e:
-				self.log.error(f"failed to create event: {e}")
+				Log.error(f"failed to create event: {e}")
 				raise HTTPException(status_code=503, detail="Bot connection unavailable") from e
 			except Exception as exc:
-				self.log.error(f"unexpected error creating event: {exc}")
+				Log.error(f"unexpected error creating event: {exc}")
 				raise HTTPException(status_code=500, detail="Failed to create event") from exc
 
 			return JSONResponse(content=response)
