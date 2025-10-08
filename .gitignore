@@ -1,4 +1,5 @@
-*.env
+apiconf.env
+botconf.env
 __pycache__/
 *.pyc
 .vscode/

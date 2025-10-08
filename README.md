@@ -30,18 +30,18 @@ vim apiconf.env
 vim botconf.env
 ```
 ##### *設定ファイルは以下の内容を含む必要があります。
-apiconf.env
 ```env
-BOT_SOCK_ADDRESS=bot # Bot側で動作するソケットのアドレス
-BOT_SOCK_PORT=50000 # Bot側で動作するソケットのポート
-GUILD_ID=YOUR_GUILD_ID # DiscordサーバーのID
-CHANNEL_ID=YOUR_CHANNEL_ID # チャンネルID(任意)、未使用
-```
-botconf.env
-```env
-BOT_TOKEN=YOUR_BOT_TOKEN # DiscordBotの認証情報
-RECEIVER_ADDRESS=0.0.0.0 # ソケットの動作アドレス
-RECEIVER_PORT=50000 # ソケットの動作ポート
+# apiconf.env
+BOT_SOCK_ADDRESS=bot               # Bot側ソケットのアドレス
+BOT_SOCK_PORT=50000                # Bot側ソケットのポート
+GUILD_ID=YOUR_GUILD_ID             # サーバーID
+CHANNEL_ID=YOUR_CHANNEL_ID         # チャンネルID(任意)
+FRONTEND_URL=http://localhost:4321 # フロントエンドのURL
+
+# botconf.env
+BOT_TOKEN=YOUR_BOT_TOKEN # Botの認証トークン
+RECEIVER_ADDRESS=0.0.0.0 # ソケットのアドレス
+RECEIVER_PORT=50000      # ソケットのポート
 ```
 
 #### 実行
