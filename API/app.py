@@ -13,6 +13,7 @@ from utils.database import UsersDB
 from utils.auth import AuthUtil
 
 Log = Logger(__name__)
+DISCORD_API_BASE = "https://discord.com/api/v10"
 
 class VRCEvMngrAPI(FastAPI):
 	def __init__(self):
@@ -48,23 +49,21 @@ class VRCEvMngrAPI(FastAPI):
 					"code": code,
 					"redirect_uri": os.environ.get("REDIRECT_URI")
 				}
-				async with session.post("https://discord.com/api/oauth2/token", headers=headers, data=data) as resp:
+				async with session.post(f"{DISCORD_API_BASE}/oauth2/token", headers=headers, data=data) as resp:
 					if resp.status != 200:
 						raise HTTPException(status_code=503, detail="Failed to fetch token from Discord")
 					token_data = await resp.json()
 
 				headers = { "Authorization": f"Bearer {token_data['access_token']}" }
 				async with aiohttp.ClientSession() as session:
-					async with session.get("https://discord.com/api/users/@me", headers=headers) as resp:
+					async with session.get(f"{DISCORD_API_BASE}/users/@me", headers=headers) as resp:
 						user_data = await resp.json()
 
 			if not await UsersDB.is_user_allowed(int(user_data["id"])):
 				raise HTTPException(status_code=403, detail="Access Denied")
 
 			jwt_payload = {
-				"user_id": user_data["id"],
-				"username": user_data["username"],
-				"avatar": user_data["avatar"]
+				"user_id": user_data["id"]
 			}
 			jwt_token = AuthUtil.encode(jwt_payload)
 			response = RedirectResponse(url=os.environ.get("FRONTEND_URL").rstrip("/") + "/dash")
