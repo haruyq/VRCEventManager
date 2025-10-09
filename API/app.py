@@ -67,7 +67,7 @@ class VRCEvMngrAPI(FastAPI):
 				"avatar": user_data["avatar"]
 			}
 			jwt_token = AuthUtil.encode(jwt_payload)
-			response = RedirectResponse(url=os.environ.get("FRONTEND_URL") + "/dash")
+			response = RedirectResponse(url=os.environ.get("FRONTEND_URL").rstrip("/") + "/dash")
 			response.set_cookie(key="Authorization", value=jwt_token, httponly=True, secure=True, samesite="lax")
 			return response
 
