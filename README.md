@@ -36,7 +36,12 @@ BOT_SOCK_ADDRESS=bot               # Bot側ソケットのアドレス
 BOT_SOCK_PORT=50000                # Bot側ソケットのポート
 GUILD_ID=YOUR_GUILD_ID             # サーバーID
 CHANNEL_ID=YOUR_CHANNEL_ID         # チャンネルID(任意)
+CLIENT_ID=YOUR_CLIENT_ID           # Client Id
+CLIENT_SECRET=YOUR_CLIENT_SECRET   # Client Secret
+REDIRECT_URL=YOUR_REDIRECT_URL     # リダイレクト先のリンク(/api/login/callback)
 FRONTEND_URL=http://localhost:4321 # フロントエンドのURL
+DOMAIN=example.com                 # 使用するドメイン
+JWT_SECRET=YOUR_SECRET_PASSWORD    # JWTのSECRETキー生成に使用するパスワード
 
 # botconf.env
 BOT_TOKEN=YOUR_BOT_TOKEN # Botの認証トークン
