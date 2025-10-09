@@ -50,10 +50,10 @@ docker compose build
 docker compose up
 ```
 
-# License
-このプロジェクトはMIT Licenseで公開されています。  
-
 # Contact
 お問い合わせなどがある場合は、下記の連絡先までご連絡ください。  
 * [X(旧Twitter)](https://x.com/haruwaiku)
 * [メールアドレス](mailto:haruwaiku@gmail.com)
+
+# License
+このプロジェクトはMIT Licenseで公開されています。  
