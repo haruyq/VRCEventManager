@@ -7,6 +7,7 @@
 # Features (ToDo)
 - [ ] Web Frontend
 - [ ] API Backend
+  - [x] Discord Login
   - [ ] Discord Server Management **<- Now**
   - [ ] VRChat Group Management **<- Next**
   - [ ] X Tweet Management
