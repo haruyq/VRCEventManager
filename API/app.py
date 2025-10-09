@@ -1,6 +1,7 @@
 import os
 import json
 import aiohttp
+from urllib.parse import urlencode
 
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse, RedirectResponse
@@ -35,6 +36,17 @@ class VRCEvMngrAPI(FastAPI):
 			except OSError as e:
 				Log.warning(f"initial connection to bot failed: {e}")
 
+		@self.get("/api/login")
+		async def login():
+			params = {
+				"client_id": os.environ.get("CLIENT_ID"),
+				"redirect_uri": os.environ.get("REDIRECT_URI"),
+				"response_type": "code",
+				"scope": "identify email"
+			}
+			redirect_url = f"{DISCORD_API_BASE}/oauth2/authorize?{urlencode(params)}"
+			return RedirectResponse(redirect_url)
+
 		@self.get("/api/login/callback")
 		async def callback(code: str):
 			if not code:
@@ -63,7 +75,8 @@ class VRCEvMngrAPI(FastAPI):
 				raise HTTPException(status_code=403, detail="Access Denied")
 
 			jwt_payload = {
-				"user_id": user_data["id"]
+				"user_id": user_data["id"],
+				"email": user_data["email"],
 			}
 			jwt_token = AuthUtil.encode(jwt_payload)
 			response = RedirectResponse(url=os.environ.get("FRONTEND_URL").rstrip("/") + "/dash")
