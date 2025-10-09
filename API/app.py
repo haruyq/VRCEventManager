@@ -29,8 +29,7 @@ class VRCEvMngrAPI(FastAPI):
 		@self.on_event("startup")
 		async def startup_event():
 			await UsersDB.init_db()
-			if not os.path.isfile("/Secrets/key.pem"):
-				AuthUtil.generate_key()
+			AuthUtil.generate_key()
 			try:
 				await self.sender.connect_async()
 			except OSError as e:
