@@ -1,3 +1,6 @@
+import os
+import json
+
 from authlib.jose import jwt
 from jwcrypto import jwk
 
@@ -7,7 +10,7 @@ class AuthUtil:
     @staticmethod
     def generate_key():
         with open(KEYFILE, "w", encoding="utf-8") as f:
-            f.write(jwk.JWK.generate(kty='RSA', size=2048).export_to_pem(private_key=True, password=None).decode('utf-8'))
+            f.write(jwk.JWK.generate(kty='RSA', size=2048).export_to_pem(private_key=True, password=os.environ.get("JWT_SECRET")))
 
     @staticmethod
     def decode(token: str):
