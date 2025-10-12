@@ -55,12 +55,11 @@ class RequestHandler:
             data: dict = json.loads(message)
             Log.debug(f"Handling Data:\n {data}")
             action = data.get("action")
-            Log.debug(f"Handling Action:\n {action}")
             
             match action:
                 case "ping":
                     return Responses.ok("pong")
-                
+
                 case "send_announcement":
                     channel_id = data.get("channel_id")
                     everyone = data.get("everyone", False)
