@@ -8,7 +8,7 @@
 - [ ] Web Frontend
 - [ ] API Backend
   - [x] Discord Login
-  - [ ] Discord Server Management
+  - [x] Discord Server Management
   - [ ] VRChat Group Management
   - [ ] X Tweet Management
   - [ ] WonderNote Auto Post
