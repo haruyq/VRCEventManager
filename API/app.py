@@ -8,6 +8,7 @@ from fastapi import FastAPI, HTTPException, Header
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.requests import Request
+from contextlib import asynccontextmanager
 
 from payloads import *
 
@@ -38,29 +39,21 @@ class VRCEvMngrAPI(FastAPI):
             allow_headers=["*"],
         )
         
-        self.vrc_api_client = None
-        self.vrc_email = None
-        self.vrc_password = None
-
-        @self.on_event("startup")
-        async def startup_event():
-            await UsersDB.init_db()
-            AuthUtil.generate_key()
-            
-            ################################################################
-            # DEBUG ONLY - Remove in production
-            # 
-            # await UsersDB.add_allowed_user(ID, EMAIL)
-            # allowed_users = await UsersDB.get_allowed_users()
-            # Log.info(f"Allowed users: {allowed_users}")
-            #
-            # DEBUG ONLY - Remove in production
-            ################################################################
-
+        @asynccontextmanager
+        async def lifespan(app: FastAPI):
             try:
+                await UsersDB.init_db()
+                AuthUtil.generate_key()
                 await self.sender.connect_async()
             except OSError as e:
                 Log.warning(f"initial connection to bot failed: {e}")
+            yield
+        
+        self.router.lifespan_context = lifespan
+        
+        self.vrc_api_client = None
+        self.vrc_email = None
+        self.vrc_password = None
 
         @self.get("/api/login")
         async def login(request: Request):
