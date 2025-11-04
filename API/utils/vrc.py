@@ -15,78 +15,44 @@ from http.cookiejar import Cookie
 from utils.logger import Logger
 
 Log = Logger(__name__)
+CREDENTIAL_PATH = "/Secrets/vrc/credential.json"
 
-class Credentials:
-    def __init__(self):
-        self.keyfile = "/Secrets/vrc/key.pem"
-        self.credential = "/Secrets/vrc/credential.txt" # TODO: 下ではJSONになっているので、.txtにしたほうが適切かも。どうせ中身はBytesだし～
-    
-    def _gen_key(self):
-        key = Fernet.generate_key()
-        os.makedirs("/Secrets/vrc", exist_ok=True)
-        with open(self.keyfile, "wb") as f:
-            f.write(key)
-        
-        return key
-
-    def _get_fernet(self) -> Fernet:
-        try:
-            with open(self.keyfile, "rb") as f:
-                key = f.read().decode("utf-8")
-        except Exception as e:
-            Log.debug("Failed to read VRChat key: %s", e)
-            key = self._gen_key()
-        try:
-            return Fernet(key)
-        except (ValueError, TypeError) as exc:
-            raise RuntimeError("cannot encrypt VRChat credentials.") from exc
-
-    def save_cookie(self, email: str, password: str, cookie_jar):
-        fernet = self._get_fernet()
-
+class Credentials: # TODO: セキュリティ実装しようね
+    @staticmethod
+    def save_cookie(email: str, password: str, cookie_jar):
         data = {
             "email": email,
             "password": password,
             "auth": cookie_jar["auth"].value,
             "twoFactorAuth": cookie_jar["twoFactorAuth"].value,
         }
-        payload = json.dumps(data).encode("utf-8")
-        encrypted_payload = fernet.encrypt(payload)
+        
+        os.makedirs("/Secrets/vrc", exist_ok=True)
+        with open(CREDENTIAL_PATH, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
 
-        with open("/Secrets/vrc/credential.json", "wb") as f:
-            f.write(encrypted_payload)
-
-    def load_cookie(self):
-        credential_path = "/Secrets/vrc/credential.json"
-        if not os.path.exists(credential_path):
+    @staticmethod
+    def load_cookie():
+        if not os.path.exists(CREDENTIAL_PATH):
             return None
-
-        fernet = self._get_fernet()
-
-        with open(credential_path, "rb") as f:
-            encrypted_payload = f.read()
 
         try:
-            decrypted = fernet.decrypt(encrypted_payload)
-        except InvalidToken as exc:
-            Log.error("Failed to decrypt VRChat credentials: %s", exc)
+            with open(CREDENTIAL_PATH, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception as exc:
+            Log.error("Failed to load VRChat credentials: %s", exc)
             return None
 
-        return json.loads(decrypted.decode("utf-8"))
-
-    def remove_credential(self):
-        credential_path = "/Secrets/vrc/credential.json"
-        if os.path.exists(credential_path):
-            os.remove(credential_path)
+    @staticmethod
+    def remove_credential():
+        if os.path.exists(CREDENTIAL_PATH):
+            os.remove(CREDENTIAL_PATH)
             return True
         return False
 
-    def logged_in(self):
-        with open("/Secrets/vrc/credential.json", "rb") as f:
-            if f.readable():
-                return True
-            else:
-                return False
+    @staticmethod
+    def logged_in():
+        return os.path.exists(CREDENTIAL_PATH)
 
 class VRChatLogin:
     def __init__(self, email: str, password: str):
@@ -107,10 +73,9 @@ class VRChatLogin:
 
     @staticmethod
     def login_using_cookie():
-        credential = Credentials()
-        if credential.logged_in():
-            data = credential.load_cookie()
-        
+        if Credentials.logged_in():
+            data = Credentials.load_cookie()
+
         else:
             Log.error("No saved VRChat credentials found.")
             return None, None
@@ -175,9 +140,8 @@ class VRChatLogin:
                 return None, None
 
             cookie_jar = api_client.rest_client.cookie_jar._cookies["api.vrchat.cloud"]["/"]
-            
-            credential = Credentials()
-            credential.save_cookie(self.email, self.password, cookie_jar)
+
+            Credentials.save_cookie(self.email, self.password, cookie_jar)
 
             return api_client, current_user
 
@@ -193,9 +157,8 @@ class VRChatLogin:
             
             current_user = auth_api.get_current_user()
             cookie_jar = api_client.rest_client.cookie_jar._cookies["api.vrchat.cloud"]["/"]
-            
-            credential = Credentials()
-            credential.save_cookie(self.email, self.password, cookie_jar)
+
+            Credentials.save_cookie(self.email, self.password, cookie_jar)
 
             return api_client, current_user
         
@@ -203,8 +166,7 @@ class VRChatLogin:
             Log.error("Exception when calling API: %s\n", e)
     
     def logout(self):
-        credential = Credentials()
-        return credential.remove_credential()
+        return Credentials.remove_credential()
 
     @staticmethod
     async def login_using_cookie_async():
