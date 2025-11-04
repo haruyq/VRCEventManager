@@ -220,8 +220,6 @@ class VRCEvMngrAPI(FastAPI):
                     raise HTTPException(status_code=500, detail="2FA verification failed")
                 
                 else:
-                    self.vrc_api_client = api_client
-                    
                     return JSONResponse(content={
                         "user_id": current_user.id,
                         "display_name": current_user.display_name
