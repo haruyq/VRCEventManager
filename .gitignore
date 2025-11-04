@@ -5,4 +5,5 @@ __pycache__/
 .vscode/
 .vs/
 memo.txt
+todo.txt
 tests/*
