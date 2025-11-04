@@ -19,6 +19,7 @@ from utils.auth import AuthUtil
 from utils.vrc import VRChatLogin
 
 Log = Logger(__name__)
+
 DISCORD_API_BASE = "https://discord.com/api"
 
 class VRCEvMngrAPI(FastAPI):
@@ -98,8 +99,7 @@ class VRCEvMngrAPI(FastAPI):
                 async with aiohttp.ClientSession() as session:
                     async with session.get(f"{DISCORD_API_BASE}/users/@me", headers=headers) as resp:
                         user_data = await resp.json()
-
-            # GuildIDはいつか可変にするかも
+                        
             allowed = await UsersDB.is_user_allowed(int(user_data["id"]), self.sender)
             if not allowed:
                 raise HTTPException(status_code=403, detail="Access Denied")
@@ -110,7 +110,14 @@ class VRCEvMngrAPI(FastAPI):
             }
             jwt_token = AuthUtil.encode(jwt_payload)
             response = RedirectResponse(url=os.environ.get("FRONTEND_URL").rstrip("/") + "/dash")
-            response.set_cookie(key="Authorization", value=jwt_token, httponly=True, secure=True, samesite="none", domain="." + os.environ.get("DOMAIN"))
+            response.set_cookie(
+                key="Authorization",
+                value=jwt_token,
+                httponly=True,
+                secure=True,
+                samesite="none",
+                domain="." + os.environ.get("DOMAIN")
+            )
    
             Log.debug(f"User {user_data['id']} logged in successfully")
             return response
@@ -155,8 +162,6 @@ class VRCEvMngrAPI(FastAPI):
                 })
                 response = await self.sender.send_async(message_payload)
 
-            except HTTPException:
-                raise
             except OSError as e:
                 Log.error(f"failed to create event: {e}")
                 raise HTTPException(status_code=503, detail="Bot connection unavailable") from e
