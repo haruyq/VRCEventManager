@@ -8,7 +8,9 @@ from utils.database import UsersDB
 from connector.sender import Sender
 
 Log = Logger(__name__)
+
 KEYFILE = "/Secrets/key.pem"
+
 key: bytes | None = None
 
 class AuthUtil:
