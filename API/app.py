@@ -60,7 +60,7 @@ class VRCEvMngrAPI(FastAPI):
         async def login(request: Request):
             auth = request.cookies.get("Authorization", None)
             if auth and await AuthUtil.verify_user(str(auth), self.sender):
-                return RedirectResponse(url=os.environ.get("FRONTEND_URL").rstrip("/") + "/dash")
+                return RedirectResponse(url="https://" + os.environ.get("DOMAIN").rstrip("/") + "/dash")
             
             params = {
                 "client_id": os.environ.get("CLIENT_ID"),
@@ -109,13 +109,13 @@ class VRCEvMngrAPI(FastAPI):
                 "email": user_data["email"],
             }
             jwt_token = AuthUtil.encode(jwt_payload)
-            response = RedirectResponse(url=os.environ.get("FRONTEND_URL").rstrip("/") + "/dash")
+            response = RedirectResponse(url="https://" + os.environ.get("DOMAIN").rstrip("/") + "/dash")
             response.set_cookie(
                 key="Authorization",
                 value=jwt_token,
                 httponly=True,
                 secure=True,
-                samesite="none",
+                samesite="lax",
                 domain="." + os.environ.get("DOMAIN")
             )
    
@@ -135,10 +135,10 @@ class VRCEvMngrAPI(FastAPI):
                     "message": payload.message
                 })
                 response = await self.sender.send_async(message_payload)
-
-            except OSError as e:
-                Log.error(f"failed to send announcement: {e}")
-                raise HTTPException(status_code=503, detail="Bot connection unavailable") from e
+                
+            except Exception as exc:
+                Log.error(f"Failed to send_announcement: {exc}")
+                raise HTTPException(status_code=500, detail="Failed to send announcement") from exc
 
             return JSONResponse(content=response)
 
@@ -162,11 +162,8 @@ class VRCEvMngrAPI(FastAPI):
                 })
                 response = await self.sender.send_async(message_payload)
 
-            except OSError as e:
-                Log.error(f"failed to create event: {e}")
-                raise HTTPException(status_code=503, detail="Bot connection unavailable") from e
             except Exception as exc:
-                Log.error(f"unexpected error creating event: {exc}")
+                Log.error(f"Failed to create event: {exc}")
                 raise HTTPException(status_code=500, detail="Failed to create event") from exc
 
             return JSONResponse(content=response)
@@ -192,7 +189,6 @@ class VRCEvMngrAPI(FastAPI):
                 
                 else:
                     return JSONResponse(content={
-                        "twofa_required": False,
                         "user_id": current_user.id,
                         "display_name": current_user.display_name
                     })
@@ -224,6 +220,8 @@ class VRCEvMngrAPI(FastAPI):
                     raise HTTPException(status_code=500, detail="2FA verification failed")
                 
                 else:
+                    self.vrc_api_client = api_client
+                    
                     return JSONResponse(content={
                         "user_id": current_user.id,
                         "display_name": current_user.display_name
